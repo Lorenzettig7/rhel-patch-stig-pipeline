@@ -1,0 +1,46 @@
+---
+- name: OpenSCAP STIG evaluation
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    scan_dir: /var/log/compliance
+    scan_label: baseline
+  tasks:
+    - name: Ensure scan directory exists
+      ansible.builtin.file:
+        path: "{{ scan_dir }}"
+        state: directory
+        mode: "0750"
+
+    - name: Run OpenSCAP DISA STIG evaluation
+      ansible.builtin.command:
+        cmd: >-
+          oscap xccdf eval
+          --profile xccdf_org.ssgproject.content_profile_stig
+          --results {{ scan_dir }}/{{ scan_label }}-results.xml
+          --report {{ scan_dir }}/{{ scan_label }}-report.html
+          /usr/share/xml/scap/ssg/content/ssg-rhel{{ ansible_distribution_major_version }}-ds.xml
+      register: scan
+      failed_when: scan.rc not in [0, 2]
+      changed_when: false
+
+    - name: Extract compliance score
+      ansible.builtin.shell:
+        cmd: >-
+          grep -o 'score system="urn:xccdf:scoring:default"[^>]*' {{ scan_dir }}/{{ scan_label }}-results.xml
+          | grep -o '>[0-9.]*' | tr -d '>' | head -1
+      register: score
+      changed_when: false
+
+    - name: Report score
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }}) {{ scan_label }} STIG score: {{ score.stdout }}%"
+
+    - name: Fetch evidence
+      ansible.builtin.fetch:
+        src: "{{ scan_dir }}/{{ item }}"
+        dest: "../evidence/{{ scan_label }}/"
+      loop:
+        - "{{ scan_label }}-results.xml"
+        - "{{ scan_label }}-report.html"
