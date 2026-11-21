@@ -1,0 +1,21 @@
+---
+# Apply only errata flagged as security (RHSA). Set false for all updates.
+patch_security_only: true
+# Package globs to hold back, e.g. ["kernel*", "openssh*"].
+patch_exclude: []
+# Reboot when `dnf needs-restarting -r` says one is required.
+patch_reboot_enabled: true
+# Minimum free space (MiB) required on / and /var before patching.
+patch_min_free_mb: 1024
+# Services that must be running after patching (systemd unit names, no suffix).
+patch_services_to_verify:
+  - sshd
+  - chronyd
+  - auditd
+# Where the per-run Markdown report is written on the managed host.
+patch_report_dir: /var/log/patching
+# Copy each host's report back to the controller.
+patch_fetch_reports: true
+# Controller-side destination for fetched reports (ansible/reports/ when run
+# from a playbook in ansible/playbooks/).
+patch_fetch_dest: "{{ playbook_dir }}/../reports"

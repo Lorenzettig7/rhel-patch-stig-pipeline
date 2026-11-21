@@ -1,0 +1,43 @@
+---
+# Snapshot the host's root EBS volume before patching. Runs on the controller
+# (one task per host, not run_once) using the instance_id and placement.region
+# host vars supplied by the aws_ec2 inventory plugin.
+- name: Look up instance details
+  amazon.aws.ec2_instance_info:
+    instance_ids:
+      - "{{ instance_id }}"
+    region: "{{ placement.region }}"
+  register: snapshot_instance_info
+  delegate_to: localhost
+  become: false
+  run_once: false
+
+- name: Resolve root volume ID
+  ansible.builtin.set_fact:
+    snapshot_root_volume_id: >-
+      {{ (snapshot_instance_info.instances[0].block_device_mappings
+          | selectattr('device_name', 'equalto', snapshot_instance_info.instances[0].root_device_name)
+          | first).ebs.volume_id }}
+
+- name: Create pre-patch snapshot of root volume
+  amazon.aws.ec2_snapshot:
+    volume_id: "{{ snapshot_root_volume_id }}"
+    region: "{{ placement.region }}"
+    description: "Pre-patch {{ inventory_hostname }} ({{ instance_id }}) {{ now(utc=true, fmt='%Y-%m-%dT%H:%M:%SZ') }}"
+    snapshot_tags:
+      Name: "pre-patch-{{ inventory_hostname }}"
+      Project: lm-demo
+      Purpose: pre-patch
+      Host: "{{ inventory_hostname }}"
+      PatchRing: "{{ tags.PatchRing | default('unknown') }}"
+    # Wait for completion so a rollback point is confirmed before dnf runs.
+    wait: true
+    wait_timeout: 1200
+  register: snapshot_result
+  delegate_to: localhost
+  become: false
+  run_once: false
+
+- name: Show snapshot ID
+  ansible.builtin.debug:
+    msg: "{{ inventory_hostname }}: {{ snapshot_root_volume_id }} -> {{ snapshot_result.snapshot_id | default('(check mode, not created)') }}"

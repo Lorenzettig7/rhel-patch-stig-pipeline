@@ -1,0 +1,46 @@
+---
+- name: Show last dnf transaction
+  ansible.builtin.command:
+    cmd: dnf history info last
+  register: patch_dnf_history
+  changed_when: false
+  check_mode: false
+
+- name: List outstanding security advisories (post-patch)
+  ansible.builtin.command:
+    cmd: dnf updateinfo list --security
+  register: patch_updateinfo_after
+  changed_when: false
+  check_mode: false
+
+- name: Ensure report directory exists
+  ansible.builtin.file:
+    path: "{{ patch_report_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Set report file name
+  ansible.builtin.set_fact:
+    patch_report_file: "patch-report-{{ ansible_facts['date_time']['iso8601_basic_short'] }}.md"
+
+# The report is evidence output, not system configuration: each run writes a
+# new timestamped file. Reporting it as unchanged keeps the idempotence check
+# (second run = zero changes) focused on the managed host's actual state.
+- name: Write patch report
+  ansible.builtin.template:
+    src: report.md.j2
+    dest: "{{ patch_report_dir }}/{{ patch_report_file }}"
+    owner: root
+    group: root
+    mode: "0640"
+  changed_when: false
+
+- name: Fetch report to controller
+  ansible.builtin.fetch:
+    src: "{{ patch_report_dir }}/{{ patch_report_file }}"
+    dest: "{{ patch_fetch_dest }}/{{ inventory_hostname }}/{{ patch_report_file }}"
+    flat: true
+  changed_when: false
+  when: patch_fetch_reports | bool

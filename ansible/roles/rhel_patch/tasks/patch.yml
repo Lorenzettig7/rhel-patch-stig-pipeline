@@ -1,0 +1,9 @@
+---
+- name: Update packages{{ ' (security only)' if patch_security_only else '' }}
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    security: "{{ patch_security_only }}"
+    exclude: "{{ patch_exclude }}"
+    update_only: true
+  register: patch_result

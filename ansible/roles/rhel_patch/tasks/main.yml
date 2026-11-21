@@ -1,0 +1,15 @@
+---
+- name: Pre-patch checks
+  ansible.builtin.import_tasks: precheck.yml
+
+- name: Apply updates
+  ansible.builtin.import_tasks: patch.yml
+
+- name: Reboot if required
+  ansible.builtin.import_tasks: reboot.yml
+
+- name: Post-patch verification
+  ansible.builtin.import_tasks: verify.yml
+
+- name: Write patch report
+  ansible.builtin.import_tasks: report.yml

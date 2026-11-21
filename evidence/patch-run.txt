@@ -1,0 +1,651 @@
+
+PLAY [Patch canary ring] *******************************************************
+
+TASK [Gathering Facts] *********************************************************
+Saturday 21 November 2026  15:42:08 -0500 (0:00:00.010)       0:00:00.010 ***** 
+ok: [rhel8-canary]
+
+TASK [Look up instance details] ************************************************
+Saturday 21 November 2026  15:42:09 -0500 (0:00:01.417)       0:00:01.427 ***** 
+ok: [rhel8-canary -> localhost]
+
+TASK [Resolve root volume ID] **************************************************
+Saturday 21 November 2026  15:42:10 -0500 (0:00:00.696)       0:00:02.124 ***** 
+ok: [rhel8-canary]
+
+TASK [Create pre-patch snapshot of root volume] ********************************
+Saturday 21 November 2026  15:42:10 -0500 (0:00:00.023)       0:00:02.147 ***** 
+changed: [rhel8-canary -> localhost]
+
+TASK [Show snapshot ID] ********************************************************
+Saturday 21 November 2026  15:52:33 -0500 (0:10:23.233)       0:10:25.381 ***** 
+ok: [rhel8-canary] => {
+    "msg": "rhel8-canary: vol-0aaaaf26bb186d007 -> snap-0a507c7d7fd68e3bf"
+}
+
+TASK [rhel_patch : Gather hardware facts if mounts are missing] ****************
+Saturday 21 November 2026  15:52:33 -0500 (0:00:00.025)       0:10:25.406 ***** 
+skipping: [rhel8-canary]
+
+TASK [rhel_patch : Assert supported OS (RHEL 8 or 9)] **************************
+Saturday 21 November 2026  15:52:33 -0500 (0:00:00.010)       0:10:25.417 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Assert free space on / and /var exceeds patch_min_free_mb] ***
+Saturday 21 November 2026  15:52:33 -0500 (0:00:00.020)       0:10:25.437 ***** 
+ok: [rhel8-canary] => (item=/)
+ok: [rhel8-canary] => (item=/var)
+
+TASK [rhel_patch : Record pre-patch kernel and OS version] *********************
+Saturday 21 November 2026  15:52:33 -0500 (0:00:00.073)       0:10:25.510 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : List outstanding security advisories (pre-patch)] ***********
+Saturday 21 November 2026  15:52:33 -0500 (0:00:00.012)       0:10:25.523 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Collect service state (pre-patch)] **************************
+Saturday 21 November 2026  15:52:40 -0500 (0:00:06.700)       0:10:32.224 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Save pre-patch service state] *******************************
+Saturday 21 November 2026  15:52:42 -0500 (0:00:01.957)       0:10:34.181 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Show pre-patch summary] *************************************
+Saturday 21 November 2026  15:52:42 -0500 (0:00:00.030)       0:10:34.212 ***** 
+ok: [rhel8-canary] => {
+    "msg": "RedHat 8.8, kernel 4.18.0-477.97.1.el8_8.x86_64, 358 security advisories outstanding"
+}
+
+TASK [rhel_patch : Update packages (security only)] ****************************
+Saturday 21 November 2026  15:52:42 -0500 (0:00:00.074)       0:10:34.286 ***** 
+changed: [rhel8-canary]
+
+TASK [rhel_patch : Ensure dnf-plugins-core is installed (provides needs-restarting)] ***
+Saturday 21 November 2026  15:57:02 -0500 (0:04:20.632)       0:14:54.919 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Check whether a reboot is required] *************************
+Saturday 21 November 2026  15:57:09 -0500 (0:00:06.873)       0:15:01.792 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Reboot] *****************************************************
+Saturday 21 November 2026  15:57:12 -0500 (0:00:02.354)       0:15:04.147 ***** 
+changed: [rhel8-canary]
+
+TASK [rhel_patch : Record reboot outcome] **************************************
+Saturday 21 November 2026  15:57:34 -0500 (0:00:21.926)       0:15:26.074 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Re-gather facts] ********************************************
+Saturday 21 November 2026  15:57:34 -0500 (0:00:00.033)       0:15:26.107 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Collect service state (post-patch)] *************************
+Saturday 21 November 2026  15:57:35 -0500 (0:00:01.408)       0:15:27.516 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Record service verification results] ************************
+Saturday 21 November 2026  15:57:37 -0500 (0:00:02.366)       0:15:29.882 ***** 
+ok: [rhel8-canary] => (item=sshd)
+ok: [rhel8-canary] => (item=chronyd)
+ok: [rhel8-canary] => (item=auditd)
+
+TASK [rhel_patch : Assert required services are running] ***********************
+Saturday 21 November 2026  15:57:37 -0500 (0:00:00.049)       0:15:29.932 ***** 
+ok: [rhel8-canary] => (item=sshd)
+ok: [rhel8-canary] => (item=chronyd)
+ok: [rhel8-canary] => (item=auditd)
+
+TASK [rhel_patch : Check overall systemd state] ********************************
+Saturday 21 November 2026  15:57:37 -0500 (0:00:00.026)       0:15:29.958 ***** 
+FAILED - RETRYING: [rhel8-canary]: rhel_patch : Check overall systemd state (11 retries left).
+ok: [rhel8-canary]
+
+TASK [rhel_patch : List failed units] ******************************************
+Saturday 21 November 2026  15:57:49 -0500 (0:00:11.308)       0:15:41.266 ***** 
+skipping: [rhel8-canary]
+
+TASK [rhel_patch : Warn on degraded system] ************************************
+Saturday 21 November 2026  15:57:49 -0500 (0:00:00.020)       0:15:41.286 ***** 
+skipping: [rhel8-canary]
+
+TASK [rhel_patch : Find newest installed kernel] *******************************
+Saturday 21 November 2026  15:57:49 -0500 (0:00:00.011)       0:15:41.298 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Compare running kernel to newest installed] *****************
+Saturday 21 November 2026  15:57:49 -0500 (0:00:00.670)       0:15:41.969 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Assert running kernel is the newest installed] **************
+Saturday 21 November 2026  15:57:49 -0500 (0:00:00.033)       0:15:42.003 ***** 
+ok: [rhel8-canary] => {
+    "changed": false,
+    "msg": "Running newest installed kernel 4.18.0-553.187.1.el8_10.x86_64"
+}
+
+TASK [rhel_patch : Warn on stale kernel (reboots disabled)] ********************
+Saturday 21 November 2026  15:57:50 -0500 (0:00:00.024)       0:15:42.027 ***** 
+skipping: [rhel8-canary]
+
+TASK [rhel_patch : Show last dnf transaction] **********************************
+Saturday 21 November 2026  15:57:50 -0500 (0:00:00.015)       0:15:42.043 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : List outstanding security advisories (post-patch)] **********
+Saturday 21 November 2026  15:57:51 -0500 (0:00:01.524)       0:15:43.567 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Ensure report directory exists] *****************************
+Saturday 21 November 2026  15:57:58 -0500 (0:00:06.809)       0:15:50.377 ***** 
+changed: [rhel8-canary]
+
+TASK [rhel_patch : Set report file name] ***************************************
+Saturday 21 November 2026  15:57:58 -0500 (0:00:00.533)       0:15:50.911 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Write patch report] *****************************************
+Saturday 21 November 2026  15:57:58 -0500 (0:00:00.025)       0:15:50.936 ***** 
+ok: [rhel8-canary]
+
+TASK [rhel_patch : Fetch report to controller] *********************************
+Saturday 21 November 2026  15:58:00 -0500 (0:00:01.959)       0:15:52.896 ***** 
+ok: [rhel8-canary]
+
+PLAY [Patch canary ring] *******************************************************
+
+TASK [Gathering Facts] *********************************************************
+Saturday 21 November 2026  15:58:03 -0500 (0:00:02.600)       0:15:55.496 ***** 
+ok: [rhel9-canary]
+
+TASK [Look up instance details] ************************************************
+Saturday 21 November 2026  15:58:04 -0500 (0:00:01.350)       0:15:56.847 ***** 
+ok: [rhel9-canary -> localhost]
+
+TASK [Resolve root volume ID] **************************************************
+Saturday 21 November 2026  15:58:05 -0500 (0:00:00.741)       0:15:57.588 ***** 
+ok: [rhel9-canary]
+
+TASK [Create pre-patch snapshot of root volume] ********************************
+Saturday 21 November 2026  15:58:05 -0500 (0:00:00.022)       0:15:57.611 ***** 
+changed: [rhel9-canary -> localhost]
+
+TASK [Show snapshot ID] ********************************************************
+Saturday 21 November 2026  16:08:38 -0500 (0:10:33.350)       0:26:30.961 ***** 
+ok: [rhel9-canary] => {
+    "msg": "rhel9-canary: vol-0b3e296bd8e056746 -> snap-0ef61cbbbacfd2633"
+}
+
+TASK [rhel_patch : Gather hardware facts if mounts are missing] ****************
+Saturday 21 November 2026  16:08:38 -0500 (0:00:00.022)       0:26:30.984 ***** 
+skipping: [rhel9-canary]
+
+TASK [rhel_patch : Assert supported OS (RHEL 8 or 9)] **************************
+Saturday 21 November 2026  16:08:38 -0500 (0:00:00.008)       0:26:30.992 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Assert free space on / and /var exceeds patch_min_free_mb] ***
+Saturday 21 November 2026  16:08:39 -0500 (0:00:00.017)       0:26:31.010 ***** 
+ok: [rhel9-canary] => (item=/)
+ok: [rhel9-canary] => (item=/var)
+
+TASK [rhel_patch : Record pre-patch kernel and OS version] *********************
+Saturday 21 November 2026  16:08:39 -0500 (0:00:00.052)       0:26:31.062 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : List outstanding security advisories (pre-patch)] ***********
+Saturday 21 November 2026  16:08:39 -0500 (0:00:00.010)       0:26:31.073 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Collect service state (pre-patch)] **************************
+Saturday 21 November 2026  16:08:42 -0500 (0:00:02.994)       0:26:34.068 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Save pre-patch service state] *******************************
+Saturday 21 November 2026  16:08:44 -0500 (0:00:01.990)       0:26:36.058 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Show pre-patch summary] *************************************
+Saturday 21 November 2026  16:08:44 -0500 (0:00:00.032)       0:26:36.091 ***** 
+ok: [rhel9-canary] => {
+    "msg": "RedHat 9.4, kernel 5.14.0-427.126.1.el9_4.x86_64, 350 security advisories outstanding"
+}
+
+TASK [rhel_patch : Update packages (security only)] ****************************
+Saturday 21 November 2026  16:08:44 -0500 (0:00:00.091)       0:26:36.183 ***** 
+changed: [rhel9-canary]
+
+TASK [rhel_patch : Ensure dnf-plugins-core is installed (provides needs-restarting)] ***
+Saturday 21 November 2026  16:12:15 -0500 (0:03:31.028)       0:30:07.211 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Check whether a reboot is required] *************************
+Saturday 21 November 2026  16:12:18 -0500 (0:00:03.012)       0:30:10.223 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Reboot] *****************************************************
+Saturday 21 November 2026  16:12:19 -0500 (0:00:00.967)       0:30:11.191 ***** 
+changed: [rhel9-canary]
+
+TASK [rhel_patch : Record reboot outcome] **************************************
+Saturday 21 November 2026  16:12:35 -0500 (0:00:16.589)       0:30:27.780 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Re-gather facts] ********************************************
+Saturday 21 November 2026  16:12:35 -0500 (0:00:00.038)       0:30:27.819 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Collect service state (post-patch)] *************************
+Saturday 21 November 2026  16:12:37 -0500 (0:00:01.251)       0:30:29.070 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Record service verification results] ************************
+Saturday 21 November 2026  16:12:40 -0500 (0:00:03.061)       0:30:32.131 ***** 
+ok: [rhel9-canary] => (item=sshd)
+ok: [rhel9-canary] => (item=chronyd)
+ok: [rhel9-canary] => (item=auditd)
+
+TASK [rhel_patch : Assert required services are running] ***********************
+Saturday 21 November 2026  16:12:40 -0500 (0:00:00.047)       0:30:32.179 ***** 
+ok: [rhel9-canary] => (item=sshd)
+ok: [rhel9-canary] => (item=chronyd)
+ok: [rhel9-canary] => (item=auditd)
+
+TASK [rhel_patch : Check overall systemd state] ********************************
+Saturday 21 November 2026  16:12:40 -0500 (0:00:00.023)       0:30:32.203 ***** 
+FAILED - RETRYING: [rhel9-canary]: rhel_patch : Check overall systemd state (11 retries left).
+ok: [rhel9-canary]
+
+TASK [rhel_patch : List failed units] ******************************************
+Saturday 21 November 2026  16:12:51 -0500 (0:00:11.098)       0:30:43.301 ***** 
+skipping: [rhel9-canary]
+
+TASK [rhel_patch : Warn on degraded system] ************************************
+Saturday 21 November 2026  16:12:51 -0500 (0:00:00.017)       0:30:43.318 ***** 
+skipping: [rhel9-canary]
+
+TASK [rhel_patch : Find newest installed kernel] *******************************
+Saturday 21 November 2026  16:12:51 -0500 (0:00:00.012)       0:30:43.330 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Compare running kernel to newest installed] *****************
+Saturday 21 November 2026  16:12:51 -0500 (0:00:00.474)       0:30:43.804 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Assert running kernel is the newest installed] **************
+Saturday 21 November 2026  16:12:51 -0500 (0:00:00.042)       0:30:43.847 ***** 
+ok: [rhel9-canary] => {
+    "changed": false,
+    "msg": "Running newest installed kernel 5.14.0-741.24.1.el9_9.x86_64"
+}
+
+TASK [rhel_patch : Warn on stale kernel (reboots disabled)] ********************
+Saturday 21 November 2026  16:12:51 -0500 (0:00:00.026)       0:30:43.873 ***** 
+skipping: [rhel9-canary]
+
+TASK [rhel_patch : Show last dnf transaction] **********************************
+Saturday 21 November 2026  16:12:51 -0500 (0:00:00.031)       0:30:43.904 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : List outstanding security advisories (post-patch)] **********
+Saturday 21 November 2026  16:12:53 -0500 (0:00:01.219)       0:30:45.124 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Ensure report directory exists] *****************************
+Saturday 21 November 2026  16:12:55 -0500 (0:00:02.842)       0:30:47.966 ***** 
+changed: [rhel9-canary]
+
+TASK [rhel_patch : Set report file name] ***************************************
+Saturday 21 November 2026  16:12:56 -0500 (0:00:00.444)       0:30:48.410 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Write patch report] *****************************************
+Saturday 21 November 2026  16:12:56 -0500 (0:00:00.024)       0:30:48.435 ***** 
+ok: [rhel9-canary]
+
+TASK [rhel_patch : Fetch report to controller] *********************************
+Saturday 21 November 2026  16:12:58 -0500 (0:00:01.616)       0:30:50.051 ***** 
+ok: [rhel9-canary]
+
+PLAY [Patch ring1] *************************************************************
+
+TASK [Gathering Facts] *********************************************************
+Saturday 21 November 2026  16:12:58 -0500 (0:00:00.450)       0:30:50.501 ***** 
+ok: [rhel9-r1]
+
+TASK [Look up instance details] ************************************************
+Saturday 21 November 2026  16:12:59 -0500 (0:00:01.348)       0:30:51.849 ***** 
+ok: [rhel9-r1 -> localhost]
+
+TASK [Resolve root volume ID] **************************************************
+Saturday 21 November 2026  16:13:00 -0500 (0:00:00.737)       0:30:52.587 ***** 
+ok: [rhel9-r1]
+
+TASK [Create pre-patch snapshot of root volume] ********************************
+Saturday 21 November 2026  16:13:00 -0500 (0:00:00.020)       0:30:52.608 ***** 
+changed: [rhel9-r1 -> localhost]
+
+TASK [Show snapshot ID] ********************************************************
+Saturday 21 November 2026  16:23:17 -0500 (0:10:16.486)       0:41:09.094 ***** 
+ok: [rhel9-r1] => {
+    "msg": "rhel9-r1: vol-0d49f0e273af78951 -> snap-0e039154e531e83fb"
+}
+
+TASK [rhel_patch : Gather hardware facts if mounts are missing] ****************
+Saturday 21 November 2026  16:23:17 -0500 (0:00:00.021)       0:41:09.115 ***** 
+skipping: [rhel9-r1]
+
+TASK [rhel_patch : Assert supported OS (RHEL 8 or 9)] **************************
+Saturday 21 November 2026  16:23:17 -0500 (0:00:00.008)       0:41:09.124 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Assert free space on / and /var exceeds patch_min_free_mb] ***
+Saturday 21 November 2026  16:23:17 -0500 (0:00:00.012)       0:41:09.136 ***** 
+ok: [rhel9-r1] => (item=/)
+ok: [rhel9-r1] => (item=/var)
+
+TASK [rhel_patch : Record pre-patch kernel and OS version] *********************
+Saturday 21 November 2026  16:23:17 -0500 (0:00:00.036)       0:41:09.173 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : List outstanding security advisories (pre-patch)] ***********
+Saturday 21 November 2026  16:23:17 -0500 (0:00:00.011)       0:41:09.185 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Collect service state (pre-patch)] **************************
+Saturday 21 November 2026  16:23:21 -0500 (0:00:04.219)       0:41:13.405 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Save pre-patch service state] *******************************
+Saturday 21 November 2026  16:23:23 -0500 (0:00:01.989)       0:41:15.394 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Show pre-patch summary] *************************************
+Saturday 21 November 2026  16:23:23 -0500 (0:00:00.026)       0:41:15.421 ***** 
+ok: [rhel9-r1] => {
+    "msg": "RedHat 9.4, kernel 5.14.0-427.126.1.el9_4.x86_64, 350 security advisories outstanding"
+}
+
+TASK [rhel_patch : Update packages (security only)] ****************************
+Saturday 21 November 2026  16:23:23 -0500 (0:00:00.078)       0:41:15.500 ***** 
+changed: [rhel9-r1]
+
+TASK [rhel_patch : Ensure dnf-plugins-core is installed (provides needs-restarting)] ***
+Saturday 21 November 2026  16:26:55 -0500 (0:03:32.374)       0:44:47.874 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Check whether a reboot is required] *************************
+Saturday 21 November 2026  16:26:59 -0500 (0:00:03.669)       0:44:51.544 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Reboot] *****************************************************
+Saturday 21 November 2026  16:27:00 -0500 (0:00:01.096)       0:44:52.640 ***** 
+changed: [rhel9-r1]
+
+TASK [rhel_patch : Record reboot outcome] **************************************
+Saturday 21 November 2026  16:27:17 -0500 (0:00:17.340)       0:45:09.981 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Re-gather facts] ********************************************
+Saturday 21 November 2026  16:27:18 -0500 (0:00:00.033)       0:45:10.014 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Collect service state (post-patch)] *************************
+Saturday 21 November 2026  16:27:19 -0500 (0:00:01.277)       0:45:11.292 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Record service verification results] ************************
+Saturday 21 November 2026  16:27:22 -0500 (0:00:03.056)       0:45:14.349 ***** 
+ok: [rhel9-r1] => (item=sshd)
+ok: [rhel9-r1] => (item=chronyd)
+ok: [rhel9-r1] => (item=auditd)
+
+TASK [rhel_patch : Assert required services are running] ***********************
+Saturday 21 November 2026  16:27:22 -0500 (0:00:00.042)       0:45:14.391 ***** 
+ok: [rhel9-r1] => (item=sshd)
+ok: [rhel9-r1] => (item=chronyd)
+ok: [rhel9-r1] => (item=auditd)
+
+TASK [rhel_patch : Check overall systemd state] ********************************
+Saturday 21 November 2026  16:27:22 -0500 (0:00:00.024)       0:45:14.416 ***** 
+FAILED - RETRYING: [rhel9-r1]: rhel_patch : Check overall systemd state (11 retries left).
+ok: [rhel9-r1]
+
+TASK [rhel_patch : List failed units] ******************************************
+Saturday 21 November 2026  16:27:33 -0500 (0:00:11.089)       0:45:25.505 ***** 
+skipping: [rhel9-r1]
+
+TASK [rhel_patch : Warn on degraded system] ************************************
+Saturday 21 November 2026  16:27:33 -0500 (0:00:00.020)       0:45:25.525 ***** 
+skipping: [rhel9-r1]
+
+TASK [rhel_patch : Find newest installed kernel] *******************************
+Saturday 21 November 2026  16:27:33 -0500 (0:00:00.011)       0:45:25.537 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Compare running kernel to newest installed] *****************
+Saturday 21 November 2026  16:27:34 -0500 (0:00:00.482)       0:45:26.020 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Assert running kernel is the newest installed] **************
+Saturday 21 November 2026  16:27:34 -0500 (0:00:00.031)       0:45:26.051 ***** 
+ok: [rhel9-r1] => {
+    "changed": false,
+    "msg": "Running newest installed kernel 5.14.0-741.24.1.el9_9.x86_64"
+}
+
+TASK [rhel_patch : Warn on stale kernel (reboots disabled)] ********************
+Saturday 21 November 2026  16:27:34 -0500 (0:00:00.021)       0:45:26.073 ***** 
+skipping: [rhel9-r1]
+
+TASK [rhel_patch : Show last dnf transaction] **********************************
+Saturday 21 November 2026  16:27:34 -0500 (0:00:00.014)       0:45:26.087 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : List outstanding security advisories (post-patch)] **********
+Saturday 21 November 2026  16:27:35 -0500 (0:00:01.285)       0:45:27.373 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Ensure report directory exists] *****************************
+Saturday 21 November 2026  16:27:38 -0500 (0:00:02.944)       0:45:30.317 ***** 
+changed: [rhel9-r1]
+
+TASK [rhel_patch : Set report file name] ***************************************
+Saturday 21 November 2026  16:27:38 -0500 (0:00:00.513)       0:45:30.831 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Write patch report] *****************************************
+Saturday 21 November 2026  16:27:38 -0500 (0:00:00.024)       0:45:30.855 ***** 
+ok: [rhel9-r1]
+
+TASK [rhel_patch : Fetch report to controller] *********************************
+Saturday 21 November 2026  16:27:40 -0500 (0:00:01.667)       0:45:32.523 ***** 
+ok: [rhel9-r1]
+
+PLAY [Patch ring1] *************************************************************
+
+TASK [Gathering Facts] *********************************************************
+Saturday 21 November 2026  16:27:40 -0500 (0:00:00.457)       0:45:32.980 ***** 
+ok: [rhel8-r1]
+
+TASK [Look up instance details] ************************************************
+Saturday 21 November 2026  16:27:42 -0500 (0:00:01.312)       0:45:34.293 ***** 
+ok: [rhel8-r1 -> localhost]
+
+TASK [Resolve root volume ID] **************************************************
+Saturday 21 November 2026  16:27:43 -0500 (0:00:00.744)       0:45:35.037 ***** 
+ok: [rhel8-r1]
+
+TASK [Create pre-patch snapshot of root volume] ********************************
+Saturday 21 November 2026  16:27:43 -0500 (0:00:00.019)       0:45:35.056 ***** 
+changed: [rhel8-r1 -> localhost]
+
+TASK [Show snapshot ID] ********************************************************
+Saturday 21 November 2026  16:38:24 -0500 (0:10:41.299)       0:56:16.356 ***** 
+ok: [rhel8-r1] => {
+    "msg": "rhel8-r1: vol-09238aeec11a43478 -> snap-064f9bbf257f919a7"
+}
+
+TASK [rhel_patch : Gather hardware facts if mounts are missing] ****************
+Saturday 21 November 2026  16:38:24 -0500 (0:00:00.022)       0:56:16.379 ***** 
+skipping: [rhel8-r1]
+
+TASK [rhel_patch : Assert supported OS (RHEL 8 or 9)] **************************
+Saturday 21 November 2026  16:38:24 -0500 (0:00:00.009)       0:56:16.388 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Assert free space on / and /var exceeds patch_min_free_mb] ***
+Saturday 21 November 2026  16:38:24 -0500 (0:00:00.031)       0:56:16.420 ***** 
+ok: [rhel8-r1] => (item=/)
+ok: [rhel8-r1] => (item=/var)
+
+TASK [rhel_patch : Record pre-patch kernel and OS version] *********************
+Saturday 21 November 2026  16:38:24 -0500 (0:00:00.057)       0:56:16.478 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : List outstanding security advisories (pre-patch)] ***********
+Saturday 21 November 2026  16:38:24 -0500 (0:00:00.013)       0:56:16.491 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Collect service state (pre-patch)] **************************
+Saturday 21 November 2026  16:38:30 -0500 (0:00:06.349)       0:56:22.841 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Save pre-patch service state] *******************************
+Saturday 21 November 2026  16:38:32 -0500 (0:00:01.845)       0:56:24.686 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Show pre-patch summary] *************************************
+Saturday 21 November 2026  16:38:32 -0500 (0:00:00.030)       0:56:24.717 ***** 
+ok: [rhel8-r1] => {
+    "msg": "RedHat 8.8, kernel 4.18.0-477.97.1.el8_8.x86_64, 358 security advisories outstanding"
+}
+
+TASK [rhel_patch : Update packages (security only)] ****************************
+Saturday 21 November 2026  16:38:32 -0500 (0:00:00.078)       0:56:24.795 ***** 
+changed: [rhel8-r1]
+
+TASK [rhel_patch : Ensure dnf-plugins-core is installed (provides needs-restarting)] ***
+Saturday 21 November 2026  16:42:48 -0500 (0:04:15.297)       1:00:40.093 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Check whether a reboot is required] *************************
+Saturday 21 November 2026  16:42:54 -0500 (0:00:06.178)       1:00:46.272 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Reboot] *****************************************************
+Saturday 21 November 2026  16:42:55 -0500 (0:00:01.272)       1:00:47.544 ***** 
+changed: [rhel8-r1]
+
+TASK [rhel_patch : Record reboot outcome] **************************************
+Saturday 21 November 2026  16:43:17 -0500 (0:00:22.378)       1:01:09.923 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Re-gather facts] ********************************************
+Saturday 21 November 2026  16:43:17 -0500 (0:00:00.037)       1:01:09.961 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Collect service state (post-patch)] *************************
+Saturday 21 November 2026  16:43:19 -0500 (0:00:01.444)       1:01:11.406 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Record service verification results] ************************
+Saturday 21 November 2026  16:43:21 -0500 (0:00:02.349)       1:01:13.756 ***** 
+ok: [rhel8-r1] => (item=sshd)
+ok: [rhel8-r1] => (item=chronyd)
+ok: [rhel8-r1] => (item=auditd)
+
+TASK [rhel_patch : Assert required services are running] ***********************
+Saturday 21 November 2026  16:43:21 -0500 (0:00:00.049)       1:01:13.805 ***** 
+ok: [rhel8-r1] => (item=sshd)
+ok: [rhel8-r1] => (item=chronyd)
+ok: [rhel8-r1] => (item=auditd)
+
+TASK [rhel_patch : Check overall systemd state] ********************************
+Saturday 21 November 2026  16:43:21 -0500 (0:00:00.023)       1:01:13.829 ***** 
+FAILED - RETRYING: [rhel8-r1]: rhel_patch : Check overall systemd state (11 retries left).
+ok: [rhel8-r1]
+
+TASK [rhel_patch : List failed units] ******************************************
+Saturday 21 November 2026  16:43:32 -0500 (0:00:11.081)       1:01:24.911 ***** 
+skipping: [rhel8-r1]
+
+TASK [rhel_patch : Warn on degraded system] ************************************
+Saturday 21 November 2026  16:43:32 -0500 (0:00:00.023)       1:01:24.934 ***** 
+skipping: [rhel8-r1]
+
+TASK [rhel_patch : Find newest installed kernel] *******************************
+Saturday 21 November 2026  16:43:32 -0500 (0:00:00.013)       1:01:24.947 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Compare running kernel to newest installed] *****************
+Saturday 21 November 2026  16:43:33 -0500 (0:00:00.645)       1:01:25.592 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Assert running kernel is the newest installed] **************
+Saturday 21 November 2026  16:43:33 -0500 (0:00:00.036)       1:01:25.629 ***** 
+ok: [rhel8-r1] => {
+    "changed": false,
+    "msg": "Running newest installed kernel 4.18.0-553.187.1.el8_10.x86_64"
+}
+
+TASK [rhel_patch : Warn on stale kernel (reboots disabled)] ********************
+Saturday 21 November 2026  16:43:33 -0500 (0:00:00.022)       1:01:25.651 ***** 
+skipping: [rhel8-r1]
+
+TASK [rhel_patch : Show last dnf transaction] **********************************
+Saturday 21 November 2026  16:43:33 -0500 (0:00:00.014)       1:01:25.665 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : List outstanding security advisories (post-patch)] **********
+Saturday 21 November 2026  16:43:35 -0500 (0:00:01.712)       1:01:27.378 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Ensure report directory exists] *****************************
+Saturday 21 November 2026  16:43:41 -0500 (0:00:06.081)       1:01:33.459 ***** 
+changed: [rhel8-r1]
+
+TASK [rhel_patch : Set report file name] ***************************************
+Saturday 21 November 2026  16:43:41 -0500 (0:00:00.463)       1:01:33.923 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Write patch report] *****************************************
+Saturday 21 November 2026  16:43:41 -0500 (0:00:00.027)       1:01:33.950 ***** 
+ok: [rhel8-r1]
+
+TASK [rhel_patch : Fetch report to controller] *********************************
+Saturday 21 November 2026  16:43:43 -0500 (0:00:01.667)       1:01:35.618 ***** 
+ok: [rhel8-r1]
+
+PLAY RECAP *********************************************************************
+rhel8-canary               : ok=31   changed=4    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+rhel8-r1                   : ok=31   changed=4    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+rhel9-canary               : ok=31   changed=4    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+rhel9-r1                   : ok=31   changed=4    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+
+
+TASKS RECAP ********************************************************************
+Saturday 21 November 2026  16:43:44 -0500 (0:00:00.449)       1:01:36.068 ***** 
+=============================================================================== 
+Create pre-patch snapshot of root volume ----------------------------- 1257.79s
+Create pre-patch snapshot of root volume ----------------------------- 1256.58s
+rhel_patch : Update packages (security only) -------------------------- 471.66s
+rhel_patch : Update packages (security only) -------------------------- 467.67s
+rhel_patch : Reboot ---------------------------------------------------- 39.72s
+rhel_patch : Reboot ---------------------------------------------------- 38.52s
+rhel_patch : Check overall systemd state ------------------------------- 22.41s
+rhel_patch : Check overall systemd state ------------------------------- 22.17s
+rhel_patch : List outstanding security advisories (pre-patch) ---------- 10.57s
+rhel_patch : Ensure dnf-plugins-core is installed (provides needs-restarting) --- 9.89s
+rhel_patch : Ensure dnf-plugins-core is installed (provides needs-restarting) --- 9.85s
+rhel_patch : List outstanding security advisories (pre-patch) ----------- 9.70s
+rhel_patch : List outstanding security advisories (post-patch) ---------- 9.65s
+rhel_patch : List outstanding security advisories (post-patch) ---------- 9.03s
+rhel_patch : Collect service state (post-patch) ------------------------- 5.43s
+rhel_patch : Collect service state (post-patch) ------------------------- 5.41s
+rhel_patch : Collect service state (pre-patch) -------------------------- 3.95s
+rhel_patch : Collect service state (pre-patch) -------------------------- 3.83s
+rhel_patch : Write patch report ----------------------------------------- 3.58s
+rhel_patch : Write patch report ----------------------------------------- 3.34s

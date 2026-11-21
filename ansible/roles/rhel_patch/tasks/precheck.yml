@@ -1,0 +1,62 @@
+---
+- name: Gather hardware facts if mounts are missing
+  ansible.builtin.setup:
+    gather_subset:
+      - min
+      - hardware
+  when: "'mounts' not in ansible_facts"
+
+- name: Assert supported OS (RHEL 8 or 9)
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == "RedHat"
+      - ansible_facts['distribution_major_version'] in ["8", "9"]
+    fail_msg: >-
+      Unsupported OS: {{ ansible_facts['distribution'] }}
+      {{ ansible_facts['distribution_version'] }}
+    quiet: true
+
+# /var is often not a separate mount; pick the longest mount point that
+# contains the path so / is checked on its behalf.
+- name: Assert free space on / and /var exceeds patch_min_free_mb
+  ansible.builtin.assert:
+    that:
+      - (_patch_mount['size_available'] | int) > (patch_min_free_mb | int) * 1048576
+    fail_msg: >-
+      {{ item }} (mount {{ _patch_mount['mount'] }}) has
+      {{ (_patch_mount['size_available'] | int / 1048576) | round(0) | int }} MiB free;
+      need more than {{ patch_min_free_mb }} MiB
+    quiet: true
+  loop:
+    - /
+    - /var
+  vars:
+    _patch_mount: >-
+      {{ ansible_facts['mounts'] | selectattr('mount', 'in', ['/', item])
+         | sort(attribute='mount') | last }}
+
+- name: Record pre-patch kernel and OS version
+  ansible.builtin.set_fact:
+    patch_kernel_before: "{{ ansible_facts['kernel'] }}"
+    patch_os_before: "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
+
+- name: List outstanding security advisories (pre-patch)
+  ansible.builtin.command:
+    cmd: dnf updateinfo list --security
+  register: patch_updateinfo_before
+  changed_when: false
+  check_mode: false
+
+- name: Collect service state (pre-patch)
+  ansible.builtin.service_facts:
+
+- name: Save pre-patch service state
+  ansible.builtin.set_fact:
+    patch_services_before: "{{ ansible_facts['services'] }}"
+
+- name: Show pre-patch summary
+  ansible.builtin.debug:
+    msg: >-
+      {{ patch_os_before }}, kernel {{ patch_kernel_before }},
+      {{ patch_updateinfo_before.stdout_lines | select('match', '^RH[SBE]A-')
+         | map('split') | map('first') | unique | list | length }} security advisories outstanding

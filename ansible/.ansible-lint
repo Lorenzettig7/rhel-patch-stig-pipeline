@@ -1,0 +1,7 @@
+---
+skip_list:
+  # rhel_patch uses the short `patch_` prefix for its variables by design.
+  - var-naming[no-role-prefix]
+exclude_paths:
+  - evidence/
+  - reports/

@@ -1,0 +1,28 @@
+---
+- name: Ensure dnf-plugins-core is installed (provides needs-restarting)
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+
+# rc 0 = no reboot needed, rc 1 = reboot needed, anything else = error.
+- name: Check whether a reboot is required
+  ansible.builtin.command:
+    cmd: dnf needs-restarting -r
+  register: needs_restart
+  failed_when: needs_restart.rc not in [0, 1]
+  changed_when: false
+  check_mode: false
+
+- name: Reboot
+  ansible.builtin.reboot:
+    reboot_timeout: 900
+    msg: Rebooting to apply patches (Ansible rhel_patch)
+  register: patch_reboot_result
+  when:
+    - needs_restart.rc == 1
+    - patch_reboot_enabled | bool
+
+- name: Record reboot outcome
+  ansible.builtin.set_fact:
+    patch_reboot_required: "{{ needs_restart.rc == 1 }}"
+    patch_rebooted: "{{ patch_reboot_result.rebooted | default(false) }}"

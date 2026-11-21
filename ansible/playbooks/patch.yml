@@ -1,0 +1,43 @@
+---
+# Ring-based RHEL security patching.
+#
+# Play 1 patches the canary ring one host at a time. any_errors_fatal: true
+# means a failure on any canary aborts the entire playbook run, so ring1 never
+# starts unless every canary patched, rebooted and verified cleanly.
+#
+# max_fail_percentage: 0 (both plays) stops a ring between serial batches: if
+# any host in a batch fails, no further batches in that ring are started.
+#
+# Each host gets a pre-patch EBS snapshot of its root volume (tagged
+# Project=lm-demo, Purpose=pre-patch) before the rhel_patch role runs.
+# Disable with -e patch_snapshot_enabled=false (default set in
+# inventory/group_vars/all.yml), or skip with --skip-tags snapshot.
+#
+# Usage (from ansible/):  ansible-playbook playbooks/patch.yml
+
+- name: Patch canary ring
+  hosts: ring_canary
+  become: true
+  serial: 1
+  max_fail_percentage: 0
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Pre-patch snapshot
+      ansible.builtin.import_tasks: tasks/pre_patch_snapshot.yml
+      when: patch_snapshot_enabled | default(true) | bool
+      tags: [snapshot]
+  roles:
+    - rhel_patch
+
+- name: Patch ring1
+  hosts: ring_ring1
+  become: true
+  serial: "50%"
+  max_fail_percentage: 0
+  pre_tasks:
+    - name: Pre-patch snapshot
+      ansible.builtin.import_tasks: tasks/pre_patch_snapshot.yml
+      when: patch_snapshot_enabled | default(true) | bool
+      tags: [snapshot]
+  roles:
+    - rhel_patch

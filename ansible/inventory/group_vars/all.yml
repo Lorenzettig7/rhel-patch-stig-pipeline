@@ -1,0 +1,3 @@
+---
+# Take a root-volume EBS snapshot before patching (playbooks/patch.yml).
+patch_snapshot_enabled: true

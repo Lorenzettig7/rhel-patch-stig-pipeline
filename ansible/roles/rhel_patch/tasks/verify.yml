@@ -1,0 +1,83 @@
+---
+- name: Re-gather facts
+  ansible.builtin.setup:
+
+- name: Collect service state (post-patch)
+  ansible.builtin.service_facts:
+
+- name: Record service verification results
+  ansible.builtin.set_fact:
+    patch_service_results: >-
+      {{ patch_service_results | default({}) | combine({
+           item: {
+             'before': (patch_services_before[item ~ '.service'] | default({})).get('state', 'not-found'),
+             'after': (ansible_facts['services'][item ~ '.service'] | default({})).get('state', 'not-found')
+           }
+         }) }}
+  loop: "{{ patch_services_to_verify }}"
+
+- name: Assert required services are running
+  ansible.builtin.assert:
+    that:
+      - patch_service_results[item]['after'] == 'running'
+    fail_msg: "{{ item }} is {{ patch_service_results[item]['after'] }} after patching"
+    quiet: true
+  loop: "{{ patch_services_to_verify }}"
+
+# Right after a reboot the system can briefly report "starting".
+# No module exposes is-system-running, so this stays a command.
+- name: Check overall systemd state  # noqa: command-instead-of-module
+  ansible.builtin.command:
+    cmd: systemctl is-system-running
+  register: patch_system_state
+  until: patch_system_state.stdout in ['running', 'degraded']
+  retries: 12
+  delay: 10
+  failed_when: patch_system_state.stdout not in ['running', 'degraded']
+  changed_when: false
+  check_mode: false
+
+- name: List failed units  # noqa: command-instead-of-module
+  ansible.builtin.command:
+    cmd: systemctl list-units --state=failed --no-legend --plain
+  register: patch_failed_units
+  changed_when: false
+  check_mode: false
+  when: patch_system_state.stdout == 'degraded'
+
+- name: Warn on degraded system
+  ansible.builtin.debug:
+    msg: "WARNING: system is degraded. Failed units: {{ patch_failed_units.stdout_lines | join(', ') }}"
+  when: patch_system_state.stdout == 'degraded'
+
+# --last sorts by install time, newest first. package_facts can't order by
+# version without an extra collection, so query rpm directly.
+- name: Find newest installed kernel  # noqa: command-instead-of-module
+  ansible.builtin.command:
+    cmd: rpm -q --last kernel
+  register: patch_installed_kernels
+  changed_when: false
+  check_mode: false
+
+- name: Compare running kernel to newest installed
+  ansible.builtin.set_fact:
+    patch_kernel_after: "{{ ansible_facts['kernel'] }}"
+    patch_kernel_newest: "{{ patch_installed_kernels.stdout_lines[0].split()[0] | regex_replace('^kernel-', '') }}"
+
+- name: Assert running kernel is the newest installed
+  ansible.builtin.assert:
+    that:
+      - patch_kernel_after == patch_kernel_newest
+    fail_msg: "Running kernel {{ patch_kernel_after }} but newest installed is {{ patch_kernel_newest }}"
+    success_msg: "Running newest installed kernel {{ patch_kernel_after }}"
+  when: patch_reboot_enabled | bool
+
+# With reboots disabled a stale kernel is expected; warn instead of failing.
+- name: Warn on stale kernel (reboots disabled)
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: running {{ patch_kernel_after }}, newest installed is
+      {{ patch_kernel_newest }}; reboot pending
+  when:
+    - not (patch_reboot_enabled | bool)
+    - patch_kernel_after != patch_kernel_newest
