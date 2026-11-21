@@ -1,0 +1,68 @@
+===== 3.230.163.228 =====
+Warning: Permanently added '3.230.163.228' (ED25519) to the list of known hosts.
+Red Hat Enterprise Linux release 9.4 (Plow)
+5.14.0-427.126.1.el9_4.x86_64
+--- security advisories ---
+
+This system is not registered with an entitlement server. You can use "rhc" or "subscription-manager" to register.
+
+Red Hat Enterprise Linux 9 for x86_64 - AppStre 124 MB/s | 125 MB     00:01    
+Red Hat Enterprise Linux 9 for x86_64 - BaseOS  117 MB/s | 170 MB     00:01    
+Red Hat Enterprise Linux 9 Client Configuration  45 kB/s | 2.8 kB     00:00    
+Updates Information Summary: available
+    350 Security notice(s)
+          2 Critical Security notice(s)
+        170 Important Security notice(s)
+        164 Moderate Security notice(s)
+         14 Low Security notice(s)
+===== 100.27.43.254 =====
+Warning: Permanently added '100.27.43.254' (ED25519) to the list of known hosts.
+Red Hat Enterprise Linux release 9.4 (Plow)
+5.14.0-427.126.1.el9_4.x86_64
+--- security advisories ---
+
+This system is not registered with an entitlement server. You can use "rhc" or "subscription-manager" to register.
+
+Red Hat Enterprise Linux 9 for x86_64 - AppStre 121 MB/s | 125 MB     00:01    
+Red Hat Enterprise Linux 9 for x86_64 - BaseOS  117 MB/s | 170 MB     00:01    
+Red Hat Enterprise Linux 9 Client Configuration  44 kB/s | 2.8 kB     00:00    
+Updates Information Summary: available
+    350 Security notice(s)
+          2 Critical Security notice(s)
+        170 Important Security notice(s)
+        164 Moderate Security notice(s)
+         14 Low Security notice(s)
+===== 3.236.198.10 =====
+Warning: Permanently added '3.236.198.10' (ED25519) to the list of known hosts.
+Red Hat Enterprise Linux release 8.8 (Ootpa)
+4.18.0-477.97.1.el8_8.x86_64
+--- security advisories ---
+
+Red Hat Enterprise Linux 8 for x86_64 - AppStre 121 MB/s |  92 MB     00:00    
+Red Hat Enterprise Linux 8 for x86_64 - BaseOS  135 MB/s | 178 MB     00:01    
+Red Hat Ansible Engine 2 for RHEL 8 (RPMs) from  25 MB/s | 2.5 MB     00:00    
+RHUI Client Configuration Server 8               45 kB/s | 2.8 kB     00:00    
+Last metadata expiration check: 0:00:01 ago on Sat 21 Nov 2026 01:46:10 AM UTC.
+Updates Information Summary: available
+    358 Security notice(s)
+          4 Critical Security notice(s)
+        178 Important Security notice(s)
+        166 Moderate Security notice(s)
+         10 Low Security notice(s)
+===== 35.175.122.29 =====
+Warning: Permanently added '35.175.122.29' (ED25519) to the list of known hosts.
+Red Hat Enterprise Linux release 8.8 (Ootpa)
+4.18.0-477.97.1.el8_8.x86_64
+--- security advisories ---
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+Red Hat Enterprise Linux 8 for x86_64 - AppStre 120 MB/s |  92 MB     00:00    
+Red Hat Enterprise Linux 8 for x86_64 - BaseOS  126 MB/s | 178 MB     00:01    
+Red Hat Ansible Engine 2 for RHEL 8 (RPMs) from  29 MB/s | 2.5 MB     00:00    
+RHUI Client Configuration Server 8               55 kB/s | 2.8 kB     00:00    
+Updates Information Summary: available
+    358 Security notice(s)
+          4 Critical Security notice(s)
+        178 Important Security notice(s)
+        166 Moderate Security notice(s)
+         10 Low Security notice(s)
