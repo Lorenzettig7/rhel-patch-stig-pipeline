@@ -1,0 +1,69 @@
+replicaCount: 1
+
+image:
+  # Pulled by digest only: repository@digest. There is deliberately no tag value.
+  repository: ghcr.io/lorenzettig7/rhel-patch-stig-pipeline/demo-api
+  # Required. The sha256 manifest digest of the signed image, e.g. the
+  # "digest" output of .github/workflows/image.yml.
+  digest: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  # Defaults to the release fullname when empty.
+  name: ""
+
+# The app never talks to the Kubernetes API.
+automountServiceAccountToken: false
+
+containerPort: 8080
+
+service:
+  type: ClusterIP
+  port: 80
+
+# Satisfies the Pod Security Standards "restricted" profile.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 128Mi
+
+# Writable scratch space, since the root filesystem is read-only.
+tmpVolume:
+  sizeLimit: 64Mi
+
+networkPolicy:
+  enabled: true
+  # Default-deny all ingress and egress for every pod in the release namespace.
+  # Disable if the namespace is shared and another policy already owns this.
+  defaultDeny: true
+  # Sources allowed to reach the app port. Empty list = any source.
+  # Example: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ingress-nginx}}}]
+  ingressFrom: []
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: demo-api
+description: Minimal FastAPI service deployed by digest with restricted-PSS-compliant defaults
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/Lorenzettig7/rhel-patch-stig-pipeline
+sources:
+  - https://github.com/Lorenzettig7/rhel-patch-stig-pipeline

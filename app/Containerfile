@@ -1,0 +1,55 @@
+# Iron Bank convention: the base is fully parameterised so it can be
+# repointed at a hardened registry without editing this file, e.g.
+#   --build-arg BASE_REGISTRY=registry1.dso.mil
+#   --build-arg BASE_IMAGE=ironbank/redhat/ubi/ubi9-minimal
+#   --build-arg BASE_TAG=<pinned tag>
+ARG BASE_REGISTRY=registry.access.redhat.com
+ARG BASE_IMAGE=ubi9/ubi-minimal
+ARG BASE_TAG=latest
+FROM ${BASE_REGISTRY}/${BASE_IMAGE}:${BASE_TAG}
+
+ARG VCS_REF=unknown
+ARG BUILD_DATE=unknown
+ARG SOURCE_URL=https://github.com/Lorenzettig7/rhel-patch-stig-pipeline
+
+LABEL org.opencontainers.image.title="demo-api" \
+      org.opencontainers.image.description="Minimal FastAPI service demonstrating patching at the image layer" \
+      org.opencontainers.image.source="${SOURCE_URL}" \
+      org.opencontainers.image.url="${SOURCE_URL}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.vendor="lm-demo"
+
+# PATCHING STEP: `microdnf update` applies every available OS errata to the
+# base layer at build time. Patching this image means rebuilding it (and
+# redeploying the new digest), never running dnf inside a live container.
+# shadow-utils is only needed to create the app user and is removed again in
+# the same layer so it doesn't ship.
+RUN microdnf update -y \
+ && microdnf install -y python3.11 shadow-utils \
+ && groupadd -g 1001 app \
+ && useradd -u 1001 -g 1001 -d /app -M -s /sbin/nologin app \
+ && microdnf remove -y shadow-utils \
+ && microdnf clean all \
+ && rm -rf /var/cache/yum /var/cache/dnf
+
+WORKDIR /app
+
+# Dependencies first so code changes don't invalidate the pip layer.
+# pip and the setuptools that ensurepip bundles aren't needed at runtime (and
+# the bundled setuptools carries HIGH CVEs), so remove them from the venv.
+COPY --chown=1001:1001 requirements.txt /app/requirements.txt
+RUN python3.11 -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir --disable-pip-version-check -r /app/requirements.txt \
+ && /opt/venv/bin/pip uninstall -y --disable-pip-version-check setuptools pip
+
+COPY --chown=1001:1001 main.py /app/main.py
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+USER 1001
+EXPOSE 8080
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
