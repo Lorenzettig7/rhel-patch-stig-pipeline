@@ -2,10 +2,15 @@
 
 How artifacts produced by this pipeline map to NIST SP 800-53 Rev. 5 control families.
 
-Each STIG rule carries one or more CCIs (Control Correlation Identifiers), and each CCI
-maps back to an 800-53 control. The CCIs for every open finding are recorded in
-[`exceptions-poam.csv`](exceptions-poam.csv), so the register links findings to controls
-without manual translation.
+Two identifier schemes matter here and they are not interchangeable. **CCE** (Common
+Configuration Enumeration, NIST) names a configuration setting; this is what SSG content
+ships, and the CCE for every open finding is recorded in
+[`exceptions-poam.csv`](exceptions-poam.csv) alongside its DISA STIG ID. **CCI** (Control
+Correlation Identifier, DISA) is what maps a STIG check to an 800-53 control — those
+references were removed from upstream SSG content in release 0.1.77 and live in DISA's
+own STIG XCCDF, so a full CCI-to-800-53 trace requires that content rather than the
+scanner output. The mapping below is therefore by artifact, not derived automatically
+from identifiers.
 
 | Control | Artifact | Where it lives |
 |---|---|---|
