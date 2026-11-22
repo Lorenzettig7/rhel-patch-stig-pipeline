@@ -8,8 +8,10 @@
 - name: Reboot if required
   ansible.builtin.import_tasks: reboot.yml
 
-- name: Post-patch verification
-  ansible.builtin.import_tasks: verify.yml
-
-- name: Write patch report
-  ansible.builtin.import_tasks: report.yml
+- name: Verify and report
+  block:
+    - name: Post-patch verification
+      ansible.builtin.import_tasks: verify.yml
+  always:
+    - name: Write patch report
+      ansible.builtin.import_tasks: report.yml
