@@ -1,0 +1,93 @@
+---
+# STIG: grub2_admin_username (RHEL-08-010149 / RHEL-09-212020) and
+# grub2_password (RHEL-08-010150 / RHEL-09-212010); on RHEL 8 UEFI the
+# equivalents are grub2_uefi_admin_username (RHEL-08-010141) and
+# grub2_uefi_password (RHEL-08-010140). SSG ships no remediation for these.
+
+- name: Assert GRUB credentials are set and valid
+  ansible.builtin.assert:
+    that:
+      - grub_admin_username is match('^[A-Za-z_]+$')
+      - grub_admin_username | lower not in ['root', 'admin', 'administrator']
+      - grub_password_hash is match('^grub\.pbkdf2\.sha512\.[0-9]+\.[0-9A-F]+\.[0-9A-F]+$')
+    fail_msg: >-
+      grub_admin_username must be letters/underscores only and not
+      root/admin/administrator; grub_password_hash must be output of
+      grub2-mkpasswd-pbkdf2 (grub.pbkdf2.sha512...). Check vault_grub2_* vars.
+    quiet: true
+  no_log: true
+
+- name: Detect UEFI boot
+  ansible.builtin.stat:
+    path: /sys/firmware/efi
+  register: grub_efi_dir
+
+# RHEL 9 uses a unified config: /boot/efi/EFI/redhat/grub.cfg is a stub that
+# chains to /boot/grub2/grub.cfg and must not be overwritten. Only RHEL 8 UEFI
+# keeps the real grub.cfg (and user.cfg, via ${prefix}) on the ESP.
+- name: Set GRUB config directory
+  ansible.builtin.set_fact:
+    grub_uefi: "{{ grub_efi_dir.stat.isdir | default(false) }}"
+    grub_cfg_dir: >-
+      {{ '/boot/efi/EFI/redhat'
+         if (grub_efi_dir.stat.isdir | default(false)) and ansible_facts['distribution_major_version'] == '8'
+         else '/boot/grub2' }}
+
+- name: Set GRUB config file paths
+  ansible.builtin.set_fact:
+    grub_cfg_path: "{{ grub_cfg_dir }}/grub.cfg"
+    grub_user_cfg_path: "{{ grub_cfg_dir }}/user.cfg"
+
+# user.cfg is read by GRUB at boot, so changing it doesn't need mkconfig.
+- name: Write GRUB password hash to user.cfg
+  ansible.builtin.copy:
+    dest: "{{ grub_user_cfg_path }}"
+    content: "GRUB2_PASSWORD={{ grub_password_hash }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Set GRUB superuser in /etc/grub.d/01_users
+  ansible.builtin.template:
+    src: 01_users.j2
+    dest: /etc/grub.d/01_users
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Regenerate grub.cfg
+
+# Catch a grub.cfg that is stale even though 01_users is already correct
+# (e.g. a previous run failed before the handler ran).
+- name: Read current grub.cfg
+  ansible.builtin.slurp:
+    src: "{{ grub_cfg_path }}"
+  register: grub_cfg_before
+
+- name: Flag grub.cfg for regeneration if superuser is missing
+  ansible.builtin.debug:
+    msg: "{{ grub_cfg_path }} does not declare superuser {{ grub_admin_username }}; regenerating"
+  changed_when: true
+  notify: Regenerate grub.cfg
+  when: >-
+    not (grub_cfg_before.content | b64decode is
+    search('(?m)^\s*set\s+superusers="' ~ grub_admin_username ~ '"\s*$'))
+
+- name: Apply pending grub.cfg regeneration
+  ansible.builtin.meta: flush_handlers
+
+- name: Read regenerated grub.cfg
+  ansible.builtin.slurp:
+    src: "{{ grub_cfg_path }}"
+  register: grub_cfg_after
+  when: not ansible_check_mode
+
+# Same shape as the SSG OVAL check for grub2_admin_username.
+- name: Verify grub.cfg declares the non-root superuser
+  ansible.builtin.assert:
+    that:
+      - grub_cfg_after.content | b64decode is search('(?m)^\s*set\s+superusers="' ~ grub_admin_username ~ '".*\n\s*export\s+superusers\s*$')
+      - grub_cfg_after.content | b64decode is search('(?m)^\s*password_pbkdf2\s+' ~ grub_admin_username ~ '\s')
+    fail_msg: "{{ grub_cfg_path }} does not set superusers=\"{{ grub_admin_username }}\""
+    success_msg: "{{ grub_cfg_path }}: superuser {{ grub_admin_username }}, password from {{ grub_user_cfg_path }}"
+  when: not ansible_check_mode

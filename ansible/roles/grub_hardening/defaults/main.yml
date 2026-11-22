@@ -1,0 +1,6 @@
+---
+# GRUB superuser name. STIG/SSG rejects root, admin and administrator, and the
+# RHEL 9 check only accepts letters and underscores.
+grub_admin_username: "{{ vault_grub2_admin_username }}"
+# PBKDF2 hash from grub2-mkpasswd-pbkdf2 (grub.pbkdf2.sha512.10000.<salt>.<hash>).
+grub_password_hash: "{{ vault_grub2_password_hash }}"

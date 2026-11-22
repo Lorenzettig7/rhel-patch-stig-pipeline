@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: grub_hardening
+  author: Giovanna Lorenzetti
+  description: >-
+    Sets a non-root GRUB2 superuser and PBKDF2 boot loader password on
+    RHEL 8/9 (STIG grub2_admin_username, grub2_password and their UEFI
+    variants on RHEL 8).
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+  galaxy_tags:
+    - rhel
+    - stig
+    - grub
+    - hardening
+dependencies: []

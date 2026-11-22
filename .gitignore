@@ -6,3 +6,4 @@
 ansible/reports/
 *.retry
 .DS_Store
+.vault_pass

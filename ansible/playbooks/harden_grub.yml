@@ -1,0 +1,12 @@
+---
+# Apply GRUB2 boot loader hardening (non-root superuser + PBKDF2 password).
+# Needs vault_grub2_admin_username and vault_grub2_password_hash from
+# inventory/group_vars/all/vault.yml (decrypted via vault_password_file).
+#
+# Usage (from ansible/):  ansible-playbook playbooks/harden_grub.yml
+
+- name: Harden GRUB2 boot loader
+  hosts: all
+  become: true
+  roles:
+    - grub_hardening

@@ -1,0 +1,13 @@
+#!{{ '/usr/bin/sh' if ansible_facts['distribution_major_version'] | int >= 9 else '/bin/sh' }} -e
+# Managed by Ansible (grub_hardening). Superuser is {{ grub_admin_username }},
+# not root (STIG grub2_admin_username). Password comes from user.cfg.
+cat << EOF
+if [ -f \${prefix}/user.cfg ]; then
+  source \${prefix}/user.cfg
+  if [ -n "\${GRUB2_PASSWORD}" ]; then
+    set superusers="{{ grub_admin_username }}"
+    export superusers
+    password_pbkdf2 {{ grub_admin_username }} \${GRUB2_PASSWORD}
+  fi
+fi
+EOF
