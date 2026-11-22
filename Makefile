@@ -38,16 +38,25 @@ kind-namespace:
 	  pod-security.kubernetes.io/warn=restricted \
 	  pod-security.kubernetes.io/audit=restricted
 
+# Manifest digest containerd recorded for the loaded image on the kind node.
+NODE_DIGEST = docker exec $(KIND_NODE) crictl inspecti -o go-template \
+	  --template '{{range .status.repoDigests}}{{println .}}{{end}}' docker.io/library/$(IMAGE) \
+	  | grep -oE 'sha256:[a-f0-9]{64}' | head -1
+
+# `kind load` registers the image under its tag only, but the kubelet resolves
+# repo@sha256 references by name, so also register the digest reference.
 kind-load:
 	kind load docker-image $(IMAGE) --name $(CLUSTER)
+	@digest=$$($(NODE_DIGEST)); \
+	  test -n "$$digest" || { echo "could not find digest for $(IMAGE) on $(KIND_NODE)"; exit 1; }; \
+	  docker exec $(KIND_NODE) ctr -n k8s.io images tag --force \
+	    docker.io/library/$(IMAGE) docker.io/library/$(IMAGE_REPO)@$$digest
 
-# The chart only accepts a digest, so read the manifest digest containerd
-# recorded for the loaded image on the kind node and deploy that. pullPolicy
-# Never: the image only exists locally, so a miss should fail, not hit a registry.
+# The chart only accepts a digest, so deploy the digest found on the node.
+# pullPolicy Never: the image only exists locally, so a miss should fail
+# rather than reach out to a registry.
 kind-install:
-	@digest=$$(docker exec $(KIND_NODE) crictl inspecti -o go-template \
-	    --template '{{range .status.repoDigests}}{{println .}}{{end}}' docker.io/library/$(IMAGE) \
-	    | grep -oE 'sha256:[a-f0-9]{64}' | head -1); \
+	@digest=$$($(NODE_DIGEST)); \
 	  test -n "$$digest" || { echo "could not find digest for $(IMAGE) on $(KIND_NODE)"; exit 1; }; \
 	  echo "Deploying docker.io/library/$(IMAGE_REPO)@$$digest"; \
 	  $(HELM) upgrade --install $(RELEASE) $(CHART) \
