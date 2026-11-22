@@ -16,24 +16,46 @@
       {{ ansible_facts['distribution_version'] }}
     quiet: true
 
+# Mount facts skip some root filesystems (e.g. overlay in containers). For a
+# path no mount fact covers, measure it with df instead (read-only).
+- name: Measure free space with df where mount facts don't cover the path
+  ansible.builtin.command:
+    cmd: df --output=avail -B1 {{ item }}
+  loop:
+    - /
+    - /var
+  when: >-
+    ansible_facts['mounts'] | selectattr('mount', 'in', ['/', item]) | list | length == 0
+  register: patch_df
+  changed_when: false
+  check_mode: false
+
 # /var is often not a separate mount; pick the longest mount point that
 # contains the path so / is checked on its behalf.
 - name: Assert free space on / and /var exceeds patch_min_free_mb
   ansible.builtin.assert:
     that:
-      - (_patch_mount['size_available'] | int) > (patch_min_free_mb | int) * 1048576
+      - (_patch_free_bytes | int) > (patch_min_free_mb | int) * 1048576
     fail_msg: >-
-      {{ item }} (mount {{ _patch_mount['mount'] }}) has
-      {{ (_patch_mount['size_available'] | int / 1048576) | round(0) | int }} MiB free;
+      {{ item }} ({{ _patch_source }}) has
+      {{ (_patch_free_bytes | int / 1048576) | round(0) | int }} MiB free;
       need more than {{ patch_min_free_mb }} MiB
     quiet: true
   loop:
     - /
     - /var
   vars:
-    _patch_mount: >-
+    _patch_mounts: >-
       {{ ansible_facts['mounts'] | selectattr('mount', 'in', ['/', item])
-         | sort(attribute='mount') | last }}
+         | sort(attribute='mount') | list }}
+    _patch_df: >-
+      {{ patch_df.results | selectattr('item', 'equalto', item)
+         | selectattr('stdout_lines', 'defined') | list }}
+    _patch_free_bytes: >-
+      {{ (_patch_mounts | last)['size_available'] if _patch_mounts
+         else (_patch_df | first)['stdout_lines'] | last }}
+    _patch_source: >-
+      {{ 'mount ' ~ (_patch_mounts | last)['mount'] if _patch_mounts else 'df' }}
 
 - name: Record pre-patch kernel and OS version
   ansible.builtin.set_fact:

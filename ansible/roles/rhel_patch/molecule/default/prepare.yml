@@ -1,0 +1,12 @@
+---
+# UBI 8 ships only platform-python 3.6, which current ansible-core can't use.
+# Mirror the live fleet's RHEL 8 bootstrap: install python3.9 with `raw`,
+# which needs no Python on the target.
+- name: Prepare
+  hosts: os_rhel8
+  gather_facts: false
+  tasks:
+    - name: Bootstrap python3.9 on RHEL 8
+      ansible.builtin.raw: test -x /usr/bin/python3.9 || dnf -y install python39
+      register: prepare_python
+      changed_when: "'Complete!' in prepare_python.stdout"

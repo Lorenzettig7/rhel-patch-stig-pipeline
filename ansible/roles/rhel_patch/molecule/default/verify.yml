@@ -1,0 +1,54 @@
+---
+- name: Verify
+  hosts: all
+  # The docker connection is already root and UBI has no sudo, so no become.
+  gather_facts: false
+  vars:
+    patch_report_dir: /var/log/patching
+  tasks:
+    - name: Find patch reports
+      ansible.builtin.find:
+        paths: "{{ patch_report_dir }}"
+        patterns: "patch-report-*.md"
+      register: verify_reports
+
+    - name: Assert a report exists under patch_report_dir
+      ansible.builtin.assert:
+        that:
+          - verify_reports.matched > 0
+        fail_msg: "No patch-report-*.md in {{ patch_report_dir }}"
+        quiet: true
+
+    - name: Read newest report
+      ansible.builtin.slurp:
+        src: "{{ (verify_reports.files | sort(attribute='mtime') | last).path }}"
+      register: verify_report
+
+    - name: Assert report contains the host name and a kernel line
+      ansible.builtin.assert:
+        that:
+          - "verify_report_text is search('Patch report: ' ~ inventory_hostname)"
+          - "verify_report_text is search('(?m)^[|] Kernel [|]')"
+        fail_msg: "Report is missing the host name or the kernel line"
+        quiet: true
+      vars:
+        verify_report_text: "{{ verify_report.content | b64decode }}"
+
+    # verify.yml runs as a separate playbook, so the converge run's facts are
+    # only visible through the fact cache. Re-run the role's kernel lookup the
+    # same way instead and check the fact gets defined.
+    - name: Re-run the role's kernel recording
+      ansible.builtin.include_role:
+        name: rhel_patch
+        tasks_from: verify.yml
+      vars:
+        patch_reboot_enabled: false
+        patch_services_to_verify: []
+        patch_services_before: {}
+
+    - name: Assert patch_kernel_after is defined
+      ansible.builtin.assert:
+        that:
+          - patch_kernel_after is defined
+          - patch_kernel_after | length > 0
+        success_msg: "patch_kernel_after = {{ patch_kernel_after | default('') }}"

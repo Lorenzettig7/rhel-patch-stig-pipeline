@@ -59,9 +59,12 @@
 - name: Record kernel state
   ansible.builtin.set_fact:
     patch_kernel_after: "{{ ansible_facts['kernel'] }}"
+    # rc != 0 means no kernel package (e.g. a container); stdout is then
+    # "package kernel is not installed", not a version.
     patch_kernel_newest: >-
-      {{ (patch_installed_kernels.stdout_lines | default([]) | first | default(''))
-         .split() | first | default('unknown') | regex_replace('^kernel-', '') }}
+      {{ ((patch_installed_kernels.stdout_lines | default([]) | first | default(''))
+         .split() | first | default('unknown') | regex_replace('^kernel-', ''))
+         if patch_installed_kernels.rc | default(1) == 0 else 'not installed' }}
 
 # ---------------------------------------------------------------- warnings
 # Debug tasks run before the assertions so their output is always emitted,

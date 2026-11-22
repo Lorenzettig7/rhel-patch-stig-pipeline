@@ -1,0 +1,8 @@
+# Trivy config for scanning deploy/. The demo-api chart refuses to render
+# without image.digest, and Trivy *skips* a chart it can't render (a warning,
+# not a failure), which would make the scan pass vacuously. Supply a
+# placeholder digest so the templates are actually rendered and checked.
+misconfiguration:
+  helm:
+    set:
+      - image.digest=sha256:0000000000000000000000000000000000000000000000000000000000000000

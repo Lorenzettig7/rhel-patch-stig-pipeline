@@ -1,0 +1,138 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # ---- evidence first: produce and upload reports before any gate ----
+
+      - name: Trivy config scan, terraform/ (SARIF)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: terraform
+          severity: CRITICAL,HIGH
+          limit-severities-for-sarif: true
+          format: sarif
+          output: trivy-config-terraform.sarif
+          exit-code: '0'
+
+      # .trivy/deploy.yaml supplies a placeholder image digest; without it the
+      # chart fails to render and Trivy silently skips it.
+      - name: Trivy config scan, deploy/ (SARIF)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: deploy
+          trivy-config: .trivy/deploy.yaml
+          severity: CRITICAL,HIGH
+          limit-severities-for-sarif: true
+          format: sarif
+          output: trivy-config-deploy.sarif
+          exit-code: '0'
+          skip-setup-trivy: true
+
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: trivy-config-${{ github.sha }}
+          path: |
+            trivy-config-terraform.sarif
+            trivy-config-deploy.sarif
+          if-no-files-found: warn
+
+      # ---- tooling ----
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+
+      - name: Install Ansible tooling
+        id: tooling
+        run: |
+          python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Set up Terraform
+        id: terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      # ---- gates: each runs even if an earlier gate failed, so one run
+      # ---- reports every failure; the job fails if any of them fail.
+
+      # ansible.cfg points at the gitignored .vault_pass. Lint never needs to
+      # decrypt, but syntax-check refuses to start without a password file, so
+      # point it at a throwaway one (the vault stays encrypted).
+      - name: ansible-lint (production profile)
+        if: ${{ !cancelled() && steps.tooling.outcome == 'success' }}
+        working-directory: ansible
+        run: |
+          printf 'ci-lint-placeholder\n' > "$RUNNER_TEMP/vault_pass"
+          ANSIBLE_VAULT_PASSWORD_FILE="$RUNNER_TEMP/vault_pass" ansible-lint --profile production
+
+      - name: terraform fmt
+        if: ${{ !cancelled() && steps.terraform.outcome == 'success' }}
+        run: terraform fmt -check -recursive terraform
+
+      - name: terraform validate
+        if: ${{ !cancelled() && steps.terraform.outcome == 'success' }}
+        working-directory: terraform
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Trivy config gate, terraform/ (CRITICAL,HIGH)
+        if: ${{ !cancelled() }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: terraform
+          severity: CRITICAL,HIGH
+          format: table
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Trivy config gate, deploy/ (CRITICAL,HIGH)
+        if: ${{ !cancelled() }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: deploy
+          trivy-config: .trivy/deploy.yaml
+          severity: CRITICAL,HIGH
+          format: table
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      # Docker's socket is at the default path on the runner, so no DOCKER_HOST.
+      - name: molecule test (rhel_patch, UBI 8 + 9)
+        if: ${{ !cancelled() && steps.tooling.outcome == 'success' }}
+        working-directory: ansible/roles/rhel_patch
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+        run: molecule test

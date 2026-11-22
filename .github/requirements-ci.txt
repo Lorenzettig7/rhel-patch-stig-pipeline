@@ -1,0 +1,7 @@
+# Python tooling for .github/workflows/ci.yml (ansible-core 2.22 needs Python >= 3.13).
+ansible-core==2.22.0
+ansible-lint==26.11.0
+molecule==26.11.0
+molecule-plugins[docker]==26.11.0
+docker==7.2.0
+requests==2.34.2

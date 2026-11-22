@@ -1,0 +1,15 @@
+---
+- name: Converge
+  hosts: all
+  # The docker connection is already root and UBI has no sudo, so no become.
+  vars:
+    patch_reboot_enabled: false      # no reboot in a container
+    patch_security_only: false       # UBI repos may carry no security errata
+    patch_fetch_reports: false
+    # sshd/chronyd/auditd are not in a UBI image. dbus isn't usable either: on
+    # UBI 9 it is socket-activated dbus-broker (stopped until something uses
+    # the bus) and the dbus.service alias reports "active", never "running".
+    # journald is running at boot on both images.
+    patch_services_to_verify: [systemd-journald]
+  roles:
+    - role: rhel_patch

@@ -1,0 +1,55 @@
+---
+# Limits, stated honestly: this scenario exercises the role's logic (prechecks,
+# dnf update, needs-restarting, service/system-state verification, report
+# rendering, idempotence) on UBI 8 and 9 containers. It does NOT exercise
+# reboots or kernel updates: containers share the host kernel, have no kernel
+# package and can't reboot, so patch_reboot_enabled is false here. Real
+# validation of reboot and kernel behaviour comes from the canary ring against
+# live hosts (playbooks/patch.yml).
+# Repo-local role, not published to Galaxy, so it has no namespace.
+role_name_check: 1
+dependency:
+  name: galaxy
+  options:
+    ignore-errors: true
+driver:
+  name: docker
+platforms:
+  - name: ubi9
+    image: registry.access.redhat.com/ubi9/ubi-init
+    pre_build_image: true
+    command: /usr/sbin/init
+    privileged: true
+    cgroupns_mode: host
+    # systemd needs the host cgroup tree when cgroupns_mode is host.
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+    groups:
+      - os_rhel9
+  - name: ubi8
+    image: registry.access.redhat.com/ubi8/ubi-init
+    pre_build_image: true
+    command: /usr/sbin/init
+    privileged: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+    groups:
+      - os_rhel8
+provisioner:
+  name: ansible
+  inventory:
+    # Same interpreters as inventory/group_vars for the live fleet.
+    group_vars:
+      os_rhel9:
+        ansible_python_interpreter: /usr/bin/python3
+      os_rhel8:
+        ansible_python_interpreter: /usr/bin/python3.9
+verifier:
+  name: ansible

@@ -25,11 +25,15 @@
       failed_when: scan.rc not in [0, 2]
       changed_when: false
 
+    # Single sed, no shell pipeline. The previous grep | grep | tr | head
+    # stopped its first match before '>' and so always returned an empty score.
     - name: Extract compliance score
-      ansible.builtin.shell:
-        cmd: >-
-          grep -o 'score system="urn:xccdf:scoring:default"[^>]*' {{ scan_dir }}/{{ scan_label }}-results.xml
-          | grep -o '>[0-9.]*' | tr -d '>' | head -1
+      ansible.builtin.command:
+        argv:
+          - sed
+          - -nE
+          - '/<score system="urn:xccdf:scoring:default"/{s/.*<score system="urn:xccdf:scoring:default"[^>]*>([0-9.]+)<.*/\1/p;q;}'
+          - "{{ scan_dir }}/{{ scan_label }}-results.xml"
       register: score
       changed_when: false
 
